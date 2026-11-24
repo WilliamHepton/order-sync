@@ -63,3 +63,17 @@ Azure treated instances as busy.
 **What does Flex Consumption give you, and what is the catch?**
 It scales to zero and bills on-demand use. The catch is cold starts: the first real order took about three
 seconds, probably while the app was waking up.
+
+## M3: Queue worker and duplicates
+
+**What does idempotent mean, and how did you achieve it?**
+Processing the same order twice has the same result as once. Finished order IDs are stored in Table Storage
+and skipped. The HubSpot contact and deal are upserts with unique keys, so a repeat updates the same records.
+
+**Isn't checking a table enough?**
+No. Two copies arriving together can both pass the check before either is marked done. I saw this in a local
+test. The unique `order_sync_id` property lets HubSpot settle it: four simultaneous writes made one deal.
+
+**Why mark the order done last?**
+If the worker crashes after the HubSpot write, the message is retried and the upsert repeats safely. Marking
+it done first could lose the order if the HubSpot write then failed.

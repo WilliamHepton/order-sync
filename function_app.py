@@ -10,8 +10,9 @@ from order_sync.settings import required
 from order_sync.stripe_webhook import InvalidEvent, InvalidSignature, read_order, verify_signature
 from order_sync.worker import parse_order, process_order
 
-# The Azure libraries log every request at INFO, which would use up the daily log cap.
+# These libraries log every request at INFO, which would use up the daily log cap.
 logging.getLogger("azure.core").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("azure.identity").setLevel(logging.WARNING)
 
 app = func.FunctionApp()

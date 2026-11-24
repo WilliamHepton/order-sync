@@ -1,11 +1,13 @@
-"""The CRM the worker writes to. The real HubSpot client replaces the fake one next."""
+"""The CRM the worker writes to: HubSpot, or a fake for local use."""
 
 import logging
 import os
 from functools import lru_cache
 from typing import Protocol
 
+from order_sync.hubspot_client import create_hubspot_crm
 from order_sync.models import Order
+from order_sync.settings import required
 
 
 class Crm(Protocol):
@@ -29,6 +31,9 @@ class FakeCrm:
 @lru_cache
 def get_crm() -> Crm:
     # No default: an accidental fake in Azure would mark orders done without syncing them.
-    if os.environ.get("CRM_BACKEND") == "fake":
+    backend = os.environ.get("CRM_BACKEND")
+    if backend == "hubspot":
+        return create_hubspot_crm(required("HUBSPOT_SERVICE_KEY"))
+    if backend == "fake":
         return FakeCrm()
-    raise RuntimeError("CRM_BACKEND is not set")
+    raise RuntimeError("CRM_BACKEND must be hubspot or fake")
