@@ -1,0 +1,30 @@
+# Secrets and private notes
+local.settings.json
+.env
+.env.*
+*secret*
+*.key
+*.pem
+private/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.python_packages/
+
+# Azurite (local Azure storage emulator) data
+.azurite/
+__blobstorage__/
+__queuestorage__/
+__azurite_db_*
+
+# Editors and OS
+.vscode/
+.idea/
+Thumbs.db

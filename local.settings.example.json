@@ -1,0 +1,11 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "STRIPE_API_KEY": "",
+    "STRIPE_WEBHOOK_SECRET": "",
+    "HUBSPOT_SERVICE_KEY": "",
+    "ANTHROPIC_API_KEY": ""
+  }
+}
