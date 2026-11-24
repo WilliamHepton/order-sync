@@ -7,9 +7,9 @@ import respx
 
 from order_sync.crm import get_crm
 from order_sync.hubspot_client import HubSpotCrm, HubSpotError, create_hubspot_crm
-from order_sync.models import Order
+from order_sync.models import Enrichment, Order
 from order_sync.money import to_decimal
-from tests.test_models import order_data
+from tests.test_models import enrichment_data, order_data
 
 ORDER = Order.model_validate(order_data())
 CONTACTS = "/crm/objects/2026-03/contacts/batch/upsert"
@@ -56,6 +56,18 @@ def test_order_becomes_contact_and_linked_deal(api: respx.MockRouter) -> None:
     }
     assert api["link"].called
     assert api["link"].calls.last.request.headers["Authorization"] == "Bearer test-key"
+
+
+def test_ai_fields_are_added_to_the_deal(api: respx.MockRouter) -> None:
+    crm().sync_order(ORDER, Enrichment.model_validate(enrichment_data()))
+    properties = sent(api, "deals")["properties"]
+    assert isinstance(properties, dict)
+    assert {k: v for k, v in properties.items() if k.startswith("ai_")} == {
+        "ai_customer_segment": "new",
+        "ai_priority": "normal",
+        "ai_summary": "One mug ordered.",
+        "ai_follow_up_needed": "false",
+    }
 
 
 def test_missing_name_is_left_out(api: respx.MockRouter) -> None:

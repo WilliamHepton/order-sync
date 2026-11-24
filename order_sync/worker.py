@@ -7,10 +7,12 @@ from typing import Protocol
 from pydantic import ValidationError
 
 from order_sync.crm import Crm
-from order_sync.models import LineItem, Order
+from order_sync.enrichment import enrich_order
+from order_sync.models import Enrichment, LineItem, Order
 from order_sync.stripe_items import fetch_line_items
 
 ItemFetcher = Callable[[str], tuple[LineItem, ...]]
+Enricher = Callable[[Order], Enrichment | None]
 
 
 class OrderStore(Protocol):
@@ -32,7 +34,11 @@ def parse_order(body: bytes) -> Order:
 
 
 def process_order(
-    order: Order, store: OrderStore, crm: Crm, fetch_items: ItemFetcher = fetch_line_items
+    order: Order,
+    store: OrderStore,
+    crm: Crm,
+    fetch_items: ItemFetcher = fetch_line_items,
+    enrich: Enricher = enrich_order,
 ) -> bool:
     """Sync the order. Returns False if it was already done."""
     # Two copies arriving together can both pass this check, so the CRM write must be an upsert too.
@@ -41,7 +47,7 @@ def process_order(
         return False
     if not order.items and order.order_id.startswith("cs_"):  # a Stripe Checkout Session
         order = order.model_copy(update={"items": fetch_items(order.order_id)})
-    deal_id = crm.sync_order(order)
+    deal_id = crm.sync_order(order, enrich(order))
     # Last on purpose: if this fails, the message is retried and the CRM upsert repeats safely.
     store.mark_done(order.order_id, deal_id)
     logging.info("Processed order_id=%s", order.order_id)

@@ -5,9 +5,9 @@ from azure.core.exceptions import ResourceNotFoundError
 import function_app
 from order_sync.crm import FakeCrm, get_crm
 from order_sync.idempotency import TableOrderStore
-from order_sync.models import LineItem, Order
+from order_sync.models import Enrichment, LineItem, Order
 from order_sync.worker import InvalidMessage, parse_order, process_order
-from tests.test_models import order_data
+from tests.test_models import enrichment_data, order_data
 
 
 class FakeTable:
@@ -29,10 +29,12 @@ class CountingCrm(FakeCrm):
     def __init__(self) -> None:
         super().__init__()
         self.calls = 0
+        self.enrichment: Enrichment | None = None
 
-    def sync_order(self, order: Order) -> str:
+    def sync_order(self, order: Order, enrichment: Enrichment | None = None) -> str:
         self.calls += 1
-        return super().sync_order(order)
+        self.enrichment = enrichment
+        return super().sync_order(order, enrichment)
 
 
 def new_store() -> TableOrderStore:
@@ -133,10 +135,36 @@ def test_items_are_not_fetched_for_other_sources() -> None:
 def test_failed_order_is_not_marked_done(monkeypatch: pytest.MonkeyPatch) -> None:
     store, crm = new_store(), CountingCrm()
 
-    def fail(order: Order) -> str:
+    def fail(order: Order, enrichment: Enrichment | None) -> str:
         raise ConnectionError
 
     monkeypatch.setattr(crm, "sync_order", fail)
     with pytest.raises(ConnectionError):
         process_order(ORDER, store, crm)
     assert store.is_done(ORDER.order_id) is False
+
+
+def test_enrichment_reaches_the_crm() -> None:
+    crm = CountingCrm()
+    result = Enrichment.model_validate(enrichment_data())
+    process_order(ORDER, new_store(), crm, enrich=lambda order: result)
+    assert crm.enrichment == result
+
+
+def test_order_is_synced_without_enrichment() -> None:
+    store, crm = new_store(), CountingCrm()
+    process_order(ORDER, store, crm, enrich=lambda order: None)
+    assert store.is_done(ORDER.order_id)
+    assert crm.enrichment is None
+
+
+def test_finished_order_is_not_enriched_again() -> None:
+    store, crm = new_store(), CountingCrm()
+    asked: list[str] = []
+
+    def enrich(order: Order) -> None:
+        asked.append(order.order_id)
+
+    process_order(ORDER, store, crm, enrich=enrich)
+    process_order(ORDER, store, crm, enrich=enrich)
+    assert len(asked) == 1

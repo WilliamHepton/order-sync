@@ -91,3 +91,17 @@ because the HubSpot calls are upserts.
 **What happens if HubSpot is down for an hour?**
 The order fails 5 tries and moves to a poison queue, where it waits. A script puts it back after the fix. I
 tested this locally with HubSpot unreachable: the order was parked, then recovered.
+
+## M5: Claude enrichment
+
+**How do you make an LLM's output safe to use in code?**
+Claude must return JSON matching a schema, and Pydantic checks it again, including the 20-word limit. If it
+is refused, cut off, invalid or late, the order is synced without the AI fields and the reason is logged.
+
+**How do you handle prompt injection in a customer's note?**
+The note is sent as data in the user message and never joins the system prompt. Claude has no tools, and can
+only fill four fixed fields. An attack could still skew a field, so nothing important depends on them alone.
+
+**How do you control the cost?**
+A small model at low effort, a daily cap stored in a table, and one request per counted call. The counter
+uses an ETag so workers cannot overwrite each other. If the counter is unavailable, no call is made.

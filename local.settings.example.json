@@ -7,6 +7,7 @@
     "STRIPE_WEBHOOK_SECRET": "",
     "HUBSPOT_SERVICE_KEY": "",
     "ANTHROPIC_API_KEY": "",
-    "CRM_BACKEND": "fake"
+    "CRM_BACKEND": "fake",
+    "CLAUDE_DAILY_CAP": "100"
   }
 }

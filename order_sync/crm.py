@@ -6,12 +6,12 @@ from functools import lru_cache
 from typing import Protocol
 
 from order_sync.hubspot_client import create_hubspot_crm
-from order_sync.models import Order
+from order_sync.models import Enrichment, Order
 from order_sync.settings import required
 
 
 class Crm(Protocol):
-    def sync_order(self, order: Order) -> str:
+    def sync_order(self, order: Order, enrichment: Enrichment | None = None) -> str:
         """Create or update the contact and deal. Returns the deal ID."""
         ...
 
@@ -22,7 +22,7 @@ class FakeCrm:
     def __init__(self) -> None:
         self.deals: dict[str, Order] = {}
 
-    def sync_order(self, order: Order) -> str:
+    def sync_order(self, order: Order, enrichment: Enrichment | None = None) -> str:
         self.deals[order.order_id] = order
         logging.info("Fake CRM: wrote deal order_id=%s total=%s", order.order_id, len(self.deals))
         return f"fake-{order.order_id}"
