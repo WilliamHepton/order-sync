@@ -26,3 +26,8 @@ Send a test order with `stripe trigger checkout.session.completed`.
 Create a single-line text deal property with the internal name `order_sync_id`, ticking **Require unique
 values** while creating it (it cannot be added later). Set `CRM_BACKEND` to `hubspot`, or to `fake` to run
 without HubSpot.
+
+## Stripe key
+
+The worker needs `STRIPE_API_KEY`: a sandbox secret key whose only permission is **Checkout Sessions: Read**.
+Live keys are refused.

@@ -49,6 +49,7 @@ def test_order_becomes_contact_and_linked_deal(api: respx.MockRouter) -> None:
             "order_sync_id": "cs_test_123",
             "dealname": "Order test_123 (25.99 GBP)",
             "amount": "25.99",
+            "description": "1 x Mug",
             "pipeline": "default",
             "dealstage": "closedwon",
         },

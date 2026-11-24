@@ -5,7 +5,7 @@ from azure.core.exceptions import ResourceNotFoundError
 import function_app
 from order_sync.crm import FakeCrm, get_crm
 from order_sync.idempotency import TableOrderStore
-from order_sync.models import Order
+from order_sync.models import LineItem, Order
 from order_sync.worker import InvalidMessage, parse_order, process_order
 from tests.test_models import order_data
 
@@ -103,6 +103,31 @@ def test_crm_backend_must_be_chosen(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("CRM_BACKEND", "fake")
     assert isinstance(get_crm(), FakeCrm)
     get_crm.cache_clear()
+
+
+def test_missing_items_are_fetched_once_per_order() -> None:
+    store, crm = new_store(), CountingCrm()
+    calls: list[str] = []
+
+    def fetch(session_id: str) -> tuple[LineItem, ...]:
+        calls.append(session_id)
+        return (LineItem(description="Mug", quantity=2, amount_total=2599),)
+
+    order = ORDER.model_copy(update={"items": ()})
+    process_order(order, store, crm, fetch)
+    process_order(order, store, crm, fetch)
+    assert calls == [ORDER.order_id]
+    assert crm.deals[ORDER.order_id].items[0].quantity == 2
+
+
+def test_items_are_not_fetched_for_other_sources() -> None:
+    crm = CountingCrm()
+    order = ORDER.model_copy(update={"items": (), "order_id": "csv-1"})
+
+    def fetch(session_id: str) -> tuple[LineItem, ...]:
+        raise AssertionError("should not be called")
+
+    assert process_order(order, new_store(), crm, fetch)
 
 
 # EXERCISE: write test_failed_order_is_not_marked_done here.

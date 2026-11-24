@@ -61,6 +61,7 @@ def deal(order: Order) -> dict[str, str]:
         # The currency is in the name because a free account may have only one currency.
         "dealname": f"Order {order.order_id[-8:]} ({amount} {order.currency.upper()})",
         "amount": str(amount),
+        "description": "; ".join(f"{i.quantity} x {i.description}" for i in order.items)[:1000],
         "pipeline": PIPELINE,
         "dealstage": PAID_STAGE,
     }
