@@ -6,6 +6,7 @@ import httpx
 
 from order_sync.models import Order
 from order_sync.money import to_decimal
+from order_sync.retry import send_with_retry
 
 BASE_URL = "https://api.hubapi.com"
 DEALS = "0-3"  # HubSpot's ID for the deal object
@@ -38,7 +39,7 @@ class HubSpotCrm:
         return str(result["results"][0]["id"])
 
     def _send(self, method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
-        response = self._client.request(method, path, json=body)
+        response = send_with_retry(lambda: self._client.request(method, path, json=body))
         # 207 means part of a batch failed. We send one record, so that is a failure.
         if response.is_error or response.status_code == 207:
             raise HubSpotError(f"HubSpot returned {response.status_code}")
