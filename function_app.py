@@ -45,4 +45,15 @@ def receive_webhook(req: func.HttpRequest, message: func.Out[str]) -> func.HttpR
 # An exception here puts the message back on the queue. After 5 tries it goes to orders-poison.
 @app.queue_trigger(arg_name="msg", queue_name="orders", connection="AzureWebJobsStorage")
 def process_order_message(msg: func.QueueMessage) -> None:
-    process_order(parse_order(msg.get_body()), get_store(), get_crm())
+    order = parse_order(msg.get_body())
+    try:
+        process_order(order, get_store(), get_crm())
+    except Exception as error:
+        # The type only: an error's text might contain customer details.
+        logging.warning(
+            "Failed order_id=%s try=%s error=%s",
+            order.order_id,
+            msg.dequeue_count,
+            type(error).__name__,
+        )
+        raise

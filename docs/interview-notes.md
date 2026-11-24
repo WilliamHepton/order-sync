@@ -77,3 +77,17 @@ test. The unique `order_sync_id` property lets HubSpot settle it: four simultane
 **Why mark the order done last?**
 If the worker crashes after the HubSpot write, the message is retried and the upsert repeats safely. Marking
 it done first could lose the order if the HubSpot write then failed.
+
+## M4: Resilience
+
+**What is exponential backoff with jitter?**
+Each wait is longer than the last (about 1s, then 2s), which gives a struggling service time to recover. A
+small random extra stops many workers retrying at the same moment.
+
+**Which errors do you retry?**
+Temporary ones: lost connections, 429 and most 5xx. A 401 or 400 will not fix itself. Retrying is only safe
+because the HubSpot calls are upserts.
+
+**What happens if HubSpot is down for an hour?**
+The order fails 5 tries and moves to a poison queue, where it waits. A script puts it back after the fix. I
+tested this locally with HubSpot unreachable: the order was parked, then recovered.

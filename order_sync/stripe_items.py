@@ -15,7 +15,7 @@ def fetch_line_items(session_id: str) -> tuple[LineItem, ...]:
     if not key.startswith(("rk_test_", "sk_test_")):
         raise RuntimeError("STRIPE_API_KEY must be a test key")
     try:
-        page = stripe.StripeClient(key).v1.checkout.sessions.line_items.list(
+        page = stripe.StripeClient(key, max_network_retries=2).v1.checkout.sessions.line_items.list(
             session_id, {"limit": 100}
         )
         return tuple(

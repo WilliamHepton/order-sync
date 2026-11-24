@@ -26,7 +26,7 @@ def http(monkeypatch: pytest.MonkeyPatch) -> FakeHttp:
     fake = FakeHttp()
     real = stripe.StripeClient
     monkeypatch.setenv("STRIPE_API_KEY", "rk_test_fake")
-    monkeypatch.setattr(stripe, "StripeClient", lambda key: real(key, http_client=fake))
+    monkeypatch.setattr(stripe, "StripeClient", lambda key, **_: real(key, http_client=fake))
     return fake
 
 
