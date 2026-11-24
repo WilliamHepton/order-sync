@@ -4,8 +4,16 @@ import logging
 
 import azure.functions as func
 
+from order_sync.crm import get_crm
+from order_sync.idempotency import get_store
 from order_sync.settings import required
 from order_sync.stripe_webhook import InvalidEvent, InvalidSignature, read_order, verify_signature
+from order_sync.worker import parse_order, process_order
+
+# These libraries log every request at INFO, which would use up the daily log cap.
+logging.getLogger("azure.core").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("azure.identity").setLevel(logging.WARNING)
 
 app = func.FunctionApp()
 
@@ -32,3 +40,9 @@ def receive_webhook(req: func.HttpRequest, message: func.Out[str]) -> func.HttpR
     message.set(order.model_dump_json())
     logging.info("Queuing order order_id=%s", order.order_id)
     return func.HttpResponse("Queued", status_code=200)
+
+
+# An exception here puts the message back on the queue. After 5 tries it goes to orders-poison.
+@app.queue_trigger(arg_name="msg", queue_name="orders", connection="AzureWebJobsStorage")
+def process_order_message(msg: func.QueueMessage) -> None:
+    process_order(parse_order(msg.get_body()), get_store(), get_crm())

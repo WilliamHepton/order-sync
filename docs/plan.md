@@ -6,13 +6,14 @@ deployment, M8 OIDC deployment, M9 monitoring, M10 write-up.
 
 The early deploy is there because the Azure credit expires on 24 December 2026.
 Every Azure resource needs approval before it is created.
+What was created and how to deploy: [deployment.md](deployment.md).
 
 Each milestone: explain, build, the developer writes one piece, review, live check, interview notes, PR.
 
 ## Decisions that differ from the brief
 
 - HubSpot service key instead of a private app (creation ended October 2026). Confirmed on a free account (contacts read).
-- Deals are upserted by a unique `order_id`, as well as the Table Storage idempotency check.
+- Deals are upserted by a unique `order_sync_id` property, as well as the Table Storage idempotency check.
 - The worker fetches Stripe line items (events omit them) and checks `payment_status`;
   `checkout.session.async_payment_succeeded` is handled too. The order key is the Checkout Session ID.
 - CSV import requires a function key. The webhook is anonymous but signature-checked.

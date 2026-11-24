@@ -6,6 +6,7 @@
     "STRIPE_API_KEY": "",
     "STRIPE_WEBHOOK_SECRET": "",
     "HUBSPOT_SERVICE_KEY": "",
-    "ANTHROPIC_API_KEY": ""
+    "ANTHROPIC_API_KEY": "",
+    "CRM_BACKEND": "fake"
   }
 }
