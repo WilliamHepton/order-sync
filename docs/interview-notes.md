@@ -31,3 +31,19 @@ It runs linting, formatting, type checks, tests and a secret scan on a clean mac
 request, so it catches "works on my machine" problems and skipped local hooks. Actions are pinned to
 commit hashes because tags can be moved. To block a bad merge, the checks must also be required in
 GitHub's branch rules.
+
+## M2: Stripe webhook
+
+**How do you know a webhook really came from Stripe?**
+Stripe signs the timestamp and raw body with a shared secret (HMAC-SHA256). We repeat the calculation on
+the exact bytes received and compare. Parsing and rewriting the JSON first could change the bytes and
+break the check. Signatures older than five minutes are refused, which limits replays.
+
+**Why put the order on a queue instead of calling HubSpot in the request?**
+Stripe needs a quick reply and HubSpot may be slow or down. The queue keeps the order safe until a worker
+can process it. The trade-off is that it may be delivered more than once, so the worker must be
+idempotent.
+
+**What status code do you return in each case?**
+200 when the order is queued or the event is not one we handle, so Stripe does not retry. 400 for a bad
+signature or invalid event. A missing secret or queue failure gives a 500, so Stripe retries later.
