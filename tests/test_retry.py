@@ -75,4 +75,6 @@ def test_daily_limit_is_not_retried(waits: list[float]) -> None:
     assert waits == []
 
 
-# EXERCISE: write test_long_retry_after_is_capped here.
+def test_long_retry_after_is_capped(waits: list[float]) -> None:
+    send_with_retry(replies(httpx.Response(429, headers={"Retry-After": "3600"}), OK))
+    assert waits == [10]
