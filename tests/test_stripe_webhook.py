@@ -124,4 +124,8 @@ def test_missing_secret_is_a_server_error(monkeypatch: pytest.MonkeyPatch) -> No
         send(body(), None)
 
 
-# EXERCISE: write test_unpaid_order_is_ignored here.
+def test_unpaid_order_is_ignored() -> None:
+    payload = session_body(payment_status="unpaid")
+    response, message = send(payload, sign(payload))
+    assert response.status_code == 200
+    assert message is None
