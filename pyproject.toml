@@ -9,7 +9,7 @@ select = ["E", "F", "I", "UP", "B"]
 python_version = "3.13"
 strict = true
 plugins = ["pydantic.mypy"]
-files = ["order_sync", "tests", "scripts"]
+files = ["function_app.py", "order_sync", "tests", "scripts"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
