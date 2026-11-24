@@ -47,3 +47,19 @@ idempotent.
 **What status code do you return in each case?**
 200 when the order is queued or the event is not one we handle, so Stripe does not retry. 400 for a bad
 signature or invalid event. A missing secret or queue failure gives a 500, so Stripe retries later.
+
+## Early Azure deployment
+
+**Why use a managed identity instead of a connection string?**
+There is no stored password to leak or rotate. Azure issues short-lived tokens to the app, and roles limit
+what it can do. Shared keys are disabled, so a storage key cannot be used at all.
+
+**Tell me about a production problem you diagnosed.**
+Every second request failed with a 503 after 60 seconds. Raising the instance limit from one to two changed
+the pattern to every third request, so the limit was not the cause, but capacity per instance was a clue.
+Raising HTTP concurrency stopped the failures, and I put the limit back to one. I could not confirm why
+Azure treated instances as busy.
+
+**What does Flex Consumption give you, and what is the catch?**
+It scales to zero and bills on-demand use. The catch is cold starts: the first real order took about three
+seconds, probably while the app was waking up.

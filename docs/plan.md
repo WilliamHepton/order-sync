@@ -6,6 +6,7 @@ deployment, M8 OIDC deployment, M9 monitoring, M10 write-up.
 
 The early deploy is there because the Azure credit expires on 24 December 2026.
 Every Azure resource needs approval before it is created.
+What was created and how to deploy: [deployment.md](deployment.md).
 
 Each milestone: explain, build, the developer writes one piece, review, live check, interview notes, PR.
 
