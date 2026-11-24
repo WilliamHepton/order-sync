@@ -38,3 +38,9 @@ Off unless `ANTHROPIC_API_KEY` is set. `CLAUDE_DAILY_CAP` limits the calls made 
 it off). Before switching it on, create these single-line text deal properties in HubSpot, or its writes will
 fail: `ai_customer_segment`, `ai_priority`, `ai_summary`, `ai_follow_up_needed`. Names and emails are not sent
 to Claude.
+
+## CSV import
+
+POST a UTF-8 CSV (up to 1 MB and 1,000 orders) to `/api/orders/import`. Required columns: `order_id`, `email`,
+`amount`, `currency`. Optional: `customer_name`, `customer_note`. Amounts are like `25.99`. In Azure, send a
+function key in the `x-functions-key` header.

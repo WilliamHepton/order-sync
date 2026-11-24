@@ -1,4 +1,4 @@
-"""Turns whole minor units into a readable amount."""
+"""Converts between whole minor units and readable amounts."""
 
 from decimal import Decimal
 
@@ -7,6 +7,16 @@ NO_DECIMALS = set("bif clp djf gnf jpy kmf krw mga pyg rwf ugx vnd vuv xaf xof x
 THREE_DECIMALS = set("bhd jod kwd omr tnd".split())
 
 
+def decimal_places(currency: str) -> int:
+    return 0 if currency in NO_DECIMALS else 3 if currency in THREE_DECIMALS else 2
+
+
 def to_decimal(minor_units: int, currency: str) -> Decimal:
-    places = 0 if currency in NO_DECIMALS else 3 if currency in THREE_DECIMALS else 2
-    return Decimal(minor_units).scaleb(-places)
+    return Decimal(minor_units).scaleb(-decimal_places(currency))
+
+
+def to_minor(amount: Decimal, currency: str) -> int:
+    minor = amount.scaleb(decimal_places(currency))
+    if minor != minor.to_integral_value():
+        raise ValueError("too many decimal places")
+    return int(minor)
