@@ -31,3 +31,10 @@ without HubSpot.
 
 The worker needs `STRIPE_API_KEY`: a sandbox secret key whose only permission is **Checkout Sessions: Read**.
 Live keys are refused.
+
+## Claude enrichment
+
+Off unless `ANTHROPIC_API_KEY` is set. `CLAUDE_DAILY_CAP` limits the calls made each day (default 100; 0 turns
+it off). Before switching it on, create these single-line text deal properties in HubSpot, or its writes will
+fail: `ai_customer_segment`, `ai_priority`, `ai_summary`, `ai_follow_up_needed`. Names and emails are not sent
+to Claude.

@@ -4,7 +4,7 @@ from typing import Any
 
 import httpx
 
-from order_sync.models import Order
+from order_sync.models import Enrichment, Order
 from order_sync.money import to_decimal
 from order_sync.retry import send_with_retry
 
@@ -22,9 +22,9 @@ class HubSpotCrm:
     def __init__(self, client: httpx.Client) -> None:
         self._client = client
 
-    def sync_order(self, order: Order) -> str:
+    def sync_order(self, order: Order, enrichment: Enrichment | None = None) -> str:
         contact_id = self._upsert("contacts", "email", order.email.lower(), contact(order))
-        deal_id = self._upsert(DEALS, "order_sync_id", order.order_id, deal(order))
+        deal_id = self._upsert(DEALS, "order_sync_id", order.order_id, deal(order, enrichment))
         link = f"{DEALS}/{deal_id}/associations/default/contacts/{contact_id}"
         self._send("PUT", f"/crm/objects/2026-03/{link}")
         return deal_id
@@ -55,9 +55,9 @@ def contact(order: Order) -> dict[str, str]:
     return properties
 
 
-def deal(order: Order) -> dict[str, str]:
+def deal(order: Order, enrichment: Enrichment | None = None) -> dict[str, str]:
     amount = to_decimal(order.amount_total, order.currency)
-    return {
+    properties = {
         "order_sync_id": order.order_id,
         # The currency is in the name because a free account may have only one currency.
         "dealname": f"Order {order.order_id[-8:]} ({amount} {order.currency.upper()})",
@@ -66,6 +66,14 @@ def deal(order: Order) -> dict[str, str]:
         "pipeline": PIPELINE,
         "dealstage": PAID_STAGE,
     }
+    if enrichment:
+        properties |= {
+            "ai_customer_segment": enrichment.customer_segment,
+            "ai_priority": enrichment.priority,
+            "ai_summary": enrichment.summary,
+            "ai_follow_up_needed": str(enrichment.follow_up_needed).lower(),
+        }
+    return properties
 
 
 def create_hubspot_crm(key: str) -> HubSpotCrm:

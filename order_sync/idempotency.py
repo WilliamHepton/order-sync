@@ -1,14 +1,12 @@
 """Remembers which orders are finished, so a repeated message does nothing."""
 
-import os
 from datetime import UTC, datetime
 from functools import lru_cache
 
 from azure.core.exceptions import ResourceNotFoundError
-from azure.data.tables import TableClient, TableServiceClient
-from azure.identity import ManagedIdentityCredential
+from azure.data.tables import TableClient
 
-from order_sync.settings import required
+from order_sync.tables import connect_table
 
 TABLE = "processedorders"
 PARTITION = "order"
@@ -39,14 +37,4 @@ class TableOrderStore:
 
 @lru_cache  # one client per worker process, like a singleton service
 def get_store() -> TableOrderStore:
-    account = os.environ.get("AzureWebJobsStorage__accountName")
-    if account:  # in Azure: managed identity, no password
-        service = TableServiceClient(
-            f"https://{account}.table.core.windows.net",
-            credential=ManagedIdentityCredential(
-                client_id=required("AzureWebJobsStorage__clientId")
-            ),
-        )
-    else:  # on this PC: Azurite
-        service = TableServiceClient.from_connection_string(required("AzureWebJobsStorage"))
-    return TableOrderStore(service.create_table_if_not_exists(TABLE))
+    return TableOrderStore(connect_table(TABLE))
