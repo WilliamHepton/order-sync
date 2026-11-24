@@ -8,6 +8,8 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 MinorUnits = Annotated[int, Field(strict=True, ge=0)]
 Currency = Annotated[str, Field(pattern=r"^[a-z]{3}$")]
 NonEmptyStr = Annotated[str, Field(min_length=1)]
+# Safe to use as a Table Storage key, which forbids characters such as / and #.
+OrderId = Annotated[str, Field(pattern=r"^[A-Za-z0-9_-]{1,200}$")]
 
 
 class CustomerDetails(BaseModel):
@@ -18,7 +20,7 @@ class CustomerDetails(BaseModel):
 class CheckoutSession(BaseModel):
     """The parts of a Stripe Checkout Session we use. Other fields are ignored."""
 
-    id: NonEmptyStr
+    id: OrderId
     payment_status: Literal["paid", "unpaid", "no_payment_required"]
     amount_total: MinorUnits
     currency: Currency
@@ -51,7 +53,7 @@ class Order(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    order_id: NonEmptyStr
+    order_id: OrderId
     email: EmailStr
     customer_name: str | None = None
     amount_total: MinorUnits

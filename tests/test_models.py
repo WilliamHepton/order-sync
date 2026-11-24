@@ -55,6 +55,7 @@ def test_valid_order() -> None:
     ("field", "value"),
     [
         ("order_id", ""),
+        ("order_id", "has/slash"),
         ("email", "not-an-email"),
         ("amount_total", 25.99),
         ("amount_total", "2599"),
