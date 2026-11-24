@@ -2,7 +2,7 @@
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 # Money is a whole number of minor units (pence, cents), as Stripe sends it. Never use float.
 MinorUnits = Annotated[int, Field(strict=True, ge=0)]
@@ -70,3 +70,10 @@ class Enrichment(BaseModel):
     priority: Literal["low", "normal", "high"]
     summary: NonEmptyStr
     follow_up_needed: Annotated[bool, Field(strict=True)]
+
+    @field_validator("summary")
+    @classmethod
+    def limit_summary_words(cls, value: str) -> str:
+        if len(value.split()) > 20:
+            raise ValueError("summary must be 20 words or fewer")
+        return value

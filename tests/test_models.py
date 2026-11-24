@@ -110,3 +110,15 @@ def test_valid_enrichment() -> None:
 def test_invalid_enrichment_is_rejected(field: str, value: object) -> None:
     with pytest.raises(ValidationError):
         Enrichment.model_validate(enrichment_data() | {field: value})
+
+
+def test_twenty_word_summary_is_accepted() -> None:
+    summary = " ".join(["word"] * 20)
+    enrichment = Enrichment.model_validate(enrichment_data() | {"summary": summary})
+    assert enrichment.summary == summary
+
+
+def test_twenty_one_word_summary_is_rejected() -> None:
+    summary = " ".join(["word"] * 21)
+    with pytest.raises(ValidationError, match="20 words or fewer"):
+        Enrichment.model_validate(enrichment_data() | {"summary": summary})
