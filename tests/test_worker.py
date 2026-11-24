@@ -130,4 +130,13 @@ def test_items_are_not_fetched_for_other_sources() -> None:
     assert process_order(order, new_store(), crm, fetch)
 
 
-# EXERCISE: write test_failed_order_is_not_marked_done here.
+def test_failed_order_is_not_marked_done(monkeypatch: pytest.MonkeyPatch) -> None:
+    store, crm = new_store(), CountingCrm()
+
+    def fail(order: Order) -> str:
+        raise ConnectionError
+
+    monkeypatch.setattr(crm, "sync_order", fail)
+    with pytest.raises(ConnectionError):
+        process_order(ORDER, store, crm)
+    assert store.is_done(ORDER.order_id) is False
