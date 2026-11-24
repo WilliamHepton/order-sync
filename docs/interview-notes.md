@@ -105,3 +105,17 @@ only fill four fixed fields. An attack could still skew a field, so nothing impo
 **How do you control the cost?**
 A small model at low effort, a daily cap stored in a table, and one request per counted call. The counter
 uses an ETag so workers cannot overwrite each other. If the counter is unavailable, no call is made.
+
+## M6: CSV import
+
+**How do you handle a file where some rows are bad?**
+Each row is checked on its own. Good rows are queued and bad ones are returned with a line number and reason,
+so one mistake does not block the rest. Problems with the whole file, such as missing columns, are a 400.
+
+**Why reuse the same queue?**
+CSV and Stripe orders become the same `Order` model, so they share duplicate protection, retries and enrichment.
+Importing the same file twice is safe.
+
+**Give an example of a bug unit tests missed.**
+The Functions host refused to load `Out[list[str]]`, which would have taken down the whole app, though every
+unit test passed. Running the real host found it. `typing.List` works.

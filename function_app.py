@@ -1,10 +1,13 @@
 """Azure Functions entry point."""
 
+import json
 import logging
+from typing import List  # noqa: UP035 - the Functions loader refuses list[str] in Out[...]
 
 import azure.functions as func
 
 from order_sync.crm import get_crm
+from order_sync.csv_import import InvalidFile, read_csv
 from order_sync.idempotency import get_store
 from order_sync.settings import required
 from order_sync.stripe_webhook import InvalidEvent, InvalidSignature, read_order, verify_signature
@@ -58,3 +61,24 @@ def process_order_message(msg: func.QueueMessage) -> None:
             type(error).__name__,
         )
         raise
+
+
+# Needs a function key, because unlike Stripe the caller has no signature to check.
+@app.route(route="orders/import", methods=["POST"], auth_level=func.AuthLevel.FUNCTION)
+@app.queue_output(arg_name="messages", queue_name="orders", connection="AzureWebJobsStorage")
+def import_csv(
+    req: func.HttpRequest,
+    messages: func.Out[List[str]],  # noqa: UP006
+) -> func.HttpResponse:
+    try:
+        result = read_csv(req.get_body())
+    except InvalidFile as error:
+        return json_response({"error": str(error)}, 400)
+    if result.orders:
+        messages.set([order.model_dump_json() for order in result.orders])
+    logging.info("CSV import queued=%s rejected=%s", len(result.orders), len(result.rejected))
+    return json_response(result.report(), 200)
+
+
+def json_response(body: dict[str, object], status: int) -> func.HttpResponse:
+    return func.HttpResponse(json.dumps(body), status_code=status, mimetype="application/json")
