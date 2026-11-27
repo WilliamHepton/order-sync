@@ -1,4 +1,6 @@
-# Interview notes
+# Design notes
+
+The reasoning behind the main choices in each milestone, as questions and answers.
 
 ## M0: Setup
 

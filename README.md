@@ -1,7 +1,7 @@
 # Order Sync
 
 A learning project: Stripe test orders are synced to HubSpot with Python and Azure Functions.
-Work in progress. See the [build plan](docs/plan.md). It uses test data only.
+See the [build plan](docs/plan.md). It uses test data only.
 
 ## Local setup
 

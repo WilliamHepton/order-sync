@@ -5,12 +5,9 @@ M3 worker and idempotency, M4 resilience, M5 Claude enrichment, M6 CSV import, M
 deployment, M8 OIDC deployment, M9 monitoring, M10 write-up.
 
 The early deploy is there because the Azure credit expires on 24 December 2026.
-Every Azure resource needs approval before it is created.
 What was created and how to deploy: [deployment.md](deployment.md).
 
-Each milestone: explain, build, the developer writes one piece, review, live check, interview notes, PR.
-
-## Decisions that differ from the brief
+## Design decisions
 
 - HubSpot service key instead of a private app (creation ended October 2026). Confirmed on a free account (contacts read).
 - Deals are upserted by a unique `order_sync_id` property, as well as the Table Storage idempotency check.
